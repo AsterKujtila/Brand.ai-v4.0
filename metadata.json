@@ -1,0 +1,8 @@
+{
+  "name": "brand.ai Platform",
+  "description": "The Architecture of Living Brand Systems: A Technical Analysis of Brand.ai and the Engineering of Identity in Generative Environments",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
