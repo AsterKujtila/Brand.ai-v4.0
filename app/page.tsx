@@ -5,6 +5,10 @@ import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight, Database, Brain, Newspaper, Blocks, ShieldCheck, Sparkles, MoveRight } from 'lucide-react';
 import Image from 'next/image';
 import { BrandOntologyChart } from '@/components/BrandOntologyChart';
+import { useRealtimeSync } from '@/hooks/use-realtime';
+import { ConnectTool } from '@/components/ConnectTool';
+import { BrandCheckConsole } from '@/components/BrandCheckConsole';
+import { useState } from 'react';
 
 const SectionTitle = ({ children, subtitle }: { children: React.ReactNode, subtitle?: string }) => (
   <div className="mb-16 max-w-3xl">
@@ -22,6 +26,8 @@ const SectionTitle = ({ children, subtitle }: { children: React.ReactNode, subti
 export default function Home() {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef });
+  const { status, events } = useRealtimeSync('sa-net-workspace');
+  const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   
   const yParallax = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
@@ -43,11 +49,14 @@ export default function Home() {
             <a href="#aeo" className="hover:text-brand-light transition-colors">AEO & GEO</a>
           </div>
           <div className="flex items-center gap-4">
-            <div className="hidden lg:flex items-center gap-2 text-[10px] uppercase bg-brand-green/20 text-brand-green px-3 py-1 rounded-full border border-brand-green/30">
-              <div className="w-1.5 h-1.5 bg-brand-green rounded-full"></div>
-              System Live: 142 Nodes Active
+            <div className={`hidden lg:flex items-center gap-2 text-[10px] uppercase px-3 py-1 rounded-full border ${status === 'ONLINE' ? 'bg-brand-green/20 text-brand-green border-brand-green/30' : 'bg-brand-orange/20 text-brand-orange border-brand-orange/30'}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${status === 'ONLINE' ? 'bg-brand-green animate-pulse' : 'bg-brand-orange'}`}></div>
+              System {status}
             </div>
-            <button className="bg-brand-light text-brand-dark px-5 py-2 text-xs font-bold uppercase rounded-sm hover:bg-brand-orange hover:text-white transition-colors">
+            <button 
+              onClick={() => setIsConsoleOpen(true)}
+              className="bg-brand-light text-brand-dark px-5 py-2 text-xs font-bold uppercase rounded-sm hover:bg-brand-orange hover:text-white transition-colors"
+            >
               Console
             </button>
           </div>
@@ -173,7 +182,8 @@ export default function Home() {
                 title: "Connected Apps",
                 desc: "Secure OAuth 2.1 and MCP integrations with Figma, Notion, and Slack to create a continuous learning loop based on daily work.",
                 color: "text-brand-gray",
-                status: "MCP Active"
+                status: "MCP Active",
+                action: <ConnectTool />
               }
             ].map((layer, i) => (
               <motion.div 
@@ -182,7 +192,7 @@ export default function Home() {
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 key={i} 
-                className="group p-6 rounded bg-brand-light/5 border border-brand-light/10 hover:border-brand-orange cursor-pointer transition-colors"
+                className="group p-6 rounded bg-brand-light/5 border border-brand-light/10 hover:border-brand-orange cursor-pointer transition-colors flex flex-col"
               >
                  <div className="flex justify-between items-start mb-4">
                   <span className="text-xs font-bold text-brand-light">{layer.title}</span>
@@ -191,9 +201,10 @@ export default function Home() {
                 <div className="mb-4">
                   <layer.icon className={`w-6 h-6 ${layer.color} opacity-80`} />
                 </div>
-                <p className="text-[11px] text-brand-gray leading-relaxed">
+                <p className="text-[11px] text-brand-gray leading-relaxed flex-grow">
                   {layer.desc}
                 </p>
+                {layer.action && layer.action}
               </motion.div>
             ))}
           </div>
@@ -268,11 +279,23 @@ export default function Home() {
             <div className="bg-brand-light/5 rounded-xl border border-brand-light/10 p-6 flex flex-col group hover:border-brand-orange transition-colors">
               <h4 className="text-sm font-semibold mb-6 flex items-center gap-3">
                 <ShieldCheck className="w-4 h-4 text-brand-green" />
-                Brand Check Validation
+                Brand Check Live Feed
               </h4>
-              <p className="text-[11px] text-brand-gray mb-6 leading-relaxed">
-                A key feature calculating a &quot;Risk Score&quot; based on brand alignment. It flags content like &quot;rim lighting&quot; when guidelines specify &quot;soft natural lighting&quot;, minimizing hallucinated brand claims and manual review workload.
-              </p>
+              <div className="text-[11px] text-brand-gray mb-6 leading-relaxed flex-1">
+                {events.length > 0 ? (
+                  <div className="space-y-3 font-mono">
+                    {events.map((evt, i) => (
+                      <div key={i} className="flex gap-4 p-2 border-b border-brand-light/5">
+                        <span className="text-brand-green">[PASS]</span>
+                        <span>{evt.type}...</span>
+                        <span className="ml-auto opacity-50">{new Date(evt.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>A key feature calculating a &quot;Risk Score&quot; based on brand alignment. Click the top right &quot;Console&quot; button to simulate a live event stream validation.</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -329,6 +352,8 @@ export default function Home() {
           </span>
         </div>
       </footer>
+      
+      <BrandCheckConsole isOpen={isConsoleOpen} onClose={() => setIsConsoleOpen(false)} />
     </main>
   );
 }
